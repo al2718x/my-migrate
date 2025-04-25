@@ -31,10 +31,10 @@ if __name__ == "__main__":
         with open(migration) as file:
             sql = file.read()
         mycursor = mydb.cursor()
-        for result in mycursor.execute(sql, multi=True):
-            if result.with_rows:
-                print("Rows produced by statement '{}':".format(result.statement))
-                print(result.fetchall())
+        for statement in sql.split(";\n"):
+            if len(statement.strip()):
+                # print(statement)
+                mycursor.execute(statement)
         mydb.commit()
         mycursor.close()
     except mysql.connector.Error as err:
