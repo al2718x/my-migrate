@@ -9,11 +9,12 @@ from mysql.connector import Error
 def main():
     # Check if code parameter is provided
     if len(sys.argv) < 2:
-        print("Usage: python main.py <migration-file> [database]")
+        print("Usage: python main.py <migration-file> [database] [drop]")
         sys.exit(1)
 
     migration_file = sys.argv[1]
     database = sys.argv[2] if len(sys.argv) > 2 else None
+    drop = sys.argv[3] if len(sys.argv) > 3 else None
 
     # Check if migration file exists
     if not os.path.isfile(migration_file):
@@ -49,11 +50,17 @@ def main():
                 cursor.execute(f"SHOW DATABASES LIKE '{database}'")
                 result = cursor.fetchone()
 
+                create_sql = f"CREATE DATABASE `{database}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
                 if result:
                     print(f"Database '{database}' exists")
+                    if drop:
+                        cursor.execute(f"DROP DATABASE `{database}`")
+                        print(f"Database '{database}' dropped successfully")
+                        cursor.execute(create_sql)
+                        print(f"Database '{database}' created successfully")
                 else:
                     print(f"Database '{database}' does not exist. Creating it...")
-                    cursor.execute(f"CREATE DATABASE `{database}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+                    cursor.execute(create_sql)
                     print(f"Database '{database}' created successfully")
 
                 # Use the database
