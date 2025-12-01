@@ -24,10 +24,10 @@ def main():
     config.read('.config')
     
     # Get database parameters
-    host = config.get('mysql', 'host')
-    user = config.get('mysql', 'user')
-    password = config.get('mysql', 'password')
-    database = config.get('mysql', 'database')
+    host = config.get('mysql', 'host', fallback='127.0.0.1')
+    user = config.get('mysql', 'user', fallback='root')
+    password = config.get('mysql', 'password', fallback='')
+    database = config.get('mysql', 'database', fallback='')
     
     connection = None
     try:
