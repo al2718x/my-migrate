@@ -1,8 +1,8 @@
-DROP DATABASE IF EXISTS `test`;
+DROP DATABASE IF EXISTS `test-my`;
 
-CREATE DATABASE IF NOT EXISTS `test` COLLATE 'utf8mb4_unicode_ci';
+CREATE DATABASE IF NOT EXISTS `test-my` COLLATE 'utf8mb4_unicode_ci';
 
-USE `test`;
+USE `test-my`;
 
 CREATE TABLE IF NOT EXISTS `user` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,

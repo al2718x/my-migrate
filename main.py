@@ -11,9 +11,9 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python main.py <migration-file>")
         sys.exit(1)
-    
+
     migration_file = sys.argv[1]
-    
+
     # Check if migration file exists
     if not os.path.isfile(migration_file):
         print(f"Error: Migration file '{migration_file}' does not exist")
@@ -22,13 +22,13 @@ def main():
     # Read configuration file
     config = configparser.ConfigParser()
     config.read('.config')
-    
+
     # Get database parameters
     host = config.get('mysql', 'host', fallback='127.0.0.1')
     user = config.get('mysql', 'user', fallback='root')
     password = config.get('mysql', 'password', fallback='')
     database = config.get('mysql', 'database', fallback='')
-    
+
     connection = None
     try:
         # Connect without specifying a database
@@ -37,28 +37,29 @@ def main():
             user=user,
             password=password
         )
-        
+
         if connection.is_connected():
             db_info = connection.get_server_info()
             print(f"Successfully connected to MySQL Server version {db_info}")
-            
+
             cursor = connection.cursor()
-            
-            # Check if database exists
-            cursor.execute(f"SHOW DATABASES LIKE '{database}'")
-            result = cursor.fetchone()
-            
-            if result:
-                print(f"Database '{database}' exists")
-            else:
-                print(f"Database '{database}' does not exist. Creating it...")
-                cursor.execute(f"CREATE DATABASE `{database}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
-                print(f"Database '{database}' created successfully")
-            
-            # Use the database
-            cursor.execute(f"USE `{database}`")
-            print(f"Connected to database: {database}")
-            
+
+            if database:
+                # Check if database exists
+                cursor.execute(f"SHOW DATABASES LIKE '{database}'")
+                result = cursor.fetchone()
+
+                if result:
+                    print(f"Database '{database}' exists")
+                else:
+                    print(f"Database '{database}' does not exist. Creating it...")
+                    cursor.execute(f"CREATE DATABASE `{database}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+                    print(f"Database '{database}' created successfully")
+
+                # Use the database
+                cursor.execute(f"USE `{database}`")
+                print(f"Connected to database: {database}")
+
             # Migration logic
             try:
                 with open(migration_file, 'r') as file:
@@ -71,13 +72,13 @@ def main():
             except Error as e:
                 print(f"Error executing migration: {e}")
                 sys.exit(1)
-            
+
             cursor.close()
-            
+
     except Error as e:
         print(f"Error connecting to MySQL: {e}")
         sys.exit(1)
-    
+
     finally:
         if connection and connection.is_connected():
             connection.close()
