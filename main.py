@@ -1,46 +1,87 @@
 #!/usr/bin/env python3
 
-import mysql.connector
-import sys
+import configparser
 import os
+import sys
+import mysql.connector
+from mysql.connector import Error
+
+def main():
+    # Check if code parameter is provided
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <migration-file>")
+        sys.exit(1)
+    
+    migration_file = sys.argv[1]
+    
+    # Check if migration file exists
+    if not os.path.isfile(migration_file):
+        print(f"Error: Migration file '{migration_file}' does not exist")
+        sys.exit(1)
+
+    # Read configuration file
+    config = configparser.ConfigParser()
+    config.read('.config')
+    
+    # Get database parameters
+    host = config.get('mysql', 'host')
+    user = config.get('mysql', 'user')
+    password = config.get('mysql', 'password')
+    database = config.get('mysql', 'database')
+    
+    connection = None
+    try:
+        # Connect without specifying a database
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password
+        )
+        
+        if connection.is_connected():
+            db_info = connection.get_server_info()
+            print(f"Successfully connected to MySQL Server version {db_info}")
+            
+            cursor = connection.cursor()
+            
+            # Check if database exists
+            cursor.execute(f"SHOW DATABASES LIKE '{database}'")
+            result = cursor.fetchone()
+            
+            if result:
+                print(f"Database '{database}' exists")
+            else:
+                print(f"Database '{database}' does not exist. Creating it...")
+                cursor.execute(f"CREATE DATABASE `{database}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+                print(f"Database '{database}' created successfully")
+            
+            # Use the database
+            cursor.execute(f"USE `{database}`")
+            print(f"Connected to database: {database}")
+            
+            # Migration logic
+            try:
+                with open(migration_file, 'r') as file:
+                    sql = file.read()
+                for statement in sql.split(";\n"):
+                    if len(statement.strip()):
+                        cursor.execute(statement)
+                connection.commit()
+                print(f"Migration executed successfully")
+            except Error as e:
+                print(f"Error executing migration: {e}")
+                sys.exit(1)
+            
+            cursor.close()
+            
+    except Error as e:
+        print(f"Error connecting to MySQL: {e}")
+        sys.exit(1)
+    
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
+            print("MySQL connection closed")
 
 if __name__ == "__main__":
-    migration = sys.argv[1] if len(sys.argv) > 1 else "migration.sql"
-    host = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1"
-    user = sys.argv[3] if len(sys.argv) > 3 else "root"
-    passwd = sys.argv[4] if len(sys.argv) > 4 else ""
-    database = sys.argv[5] if len(sys.argv) > 5 else ""
-
-    if not os.path.isfile(migration):
-        print(f"Migration file '{migration}' does not exist.")
-        sys.exit(1)
-
-    try:
-        mydb = (
-            mysql.connector.connect(host=host, user=user, passwd=passwd)
-            if "" == database
-            else mysql.connector.connect(
-                host=host, user=user, passwd=passwd, database=database
-            )
-        )
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        sys.exit(1)
-
-    try:
-        with open(migration) as file:
-            sql = file.read()
-        mycursor = mydb.cursor()
-        for statement in sql.split(";\n"):
-            if len(statement.strip()):
-                # print(statement)
-                mycursor.execute(statement)
-        mydb.commit()
-        mycursor.close()
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        sys.exit(1)
-
-    mydb.close()
-
-    sys.exit(0)
+    main()
