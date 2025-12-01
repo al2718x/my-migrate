@@ -9,10 +9,11 @@ from mysql.connector import Error
 def main():
     # Check if code parameter is provided
     if len(sys.argv) < 2:
-        print("Usage: python main.py <migration-file>")
+        print("Usage: python main.py <migration-file> [database]")
         sys.exit(1)
 
     migration_file = sys.argv[1]
+    database = sys.argv[2] if len(sys.argv) > 2 else None
 
     # Check if migration file exists
     if not os.path.isfile(migration_file):
@@ -27,7 +28,6 @@ def main():
     host = config.get('mysql', 'host', fallback='127.0.0.1')
     user = config.get('mysql', 'user', fallback='root')
     password = config.get('mysql', 'password', fallback='')
-    database = config.get('mysql', 'database', fallback='')
 
     connection = None
     try:
