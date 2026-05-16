@@ -3,8 +3,8 @@
 import configparser
 import os
 import sys
-import mysql.connector
-from mysql.connector import Error
+import mysql.connector  # type: ignore
+from mysql.connector import Error  # type: ignore
 
 def main():
     # Check if code parameter is provided
